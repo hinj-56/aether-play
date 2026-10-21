@@ -11,8 +11,8 @@
     if (location.protocol === 'file:') location.replace('http://127.0.0.1:5173/');
   </script>
   <link rel="icon" href="/aether-play/favicon.svg">
-  <script type="module" crossorigin src="/aether-play/assets/index-ynJGMmTK.js"></script>
-  <link rel="stylesheet" crossorigin href="/aether-play/assets/index-CotcALpi.css">
+  <script type="module" crossorigin src="/aether-play/assets/index-Bk09eg5A.js"></script>
+  <link rel="stylesheet" crossorigin href="/aether-play/assets/index-FbtxADdH.css">
 </head>
 <body>
   <main class="game-shell" id="gameShell" aria-label="AETHER · 3D 手势魔法师">
@@ -116,6 +116,10 @@
             <span class="camera-live" id="cameraLive" hidden><i></i>本机识别</span>
           </div>
           <div class="camera-status"><span id="trackingDot" class="status-dot" aria-hidden="true"></span><span id="cameraStatus" role="status">摄像头尚未开启</span><button type="button" id="switchMode" title="切换操控方式" aria-label="切换摄像头或鼠标操控">切换</button></div>
+          <div class="aim-controls" id="aimControls" hidden>
+            <label for="aimSensitivity">灵敏度</label><input id="aimSensitivity" type="range" min="0.7" max="1.4" step="0.1" value="1" aria-label="瞄准灵敏度，向左更精细，向右移动更快" title="向左更精细 · 向右移动更快">
+            <button type="button" id="recenterAim" title="让当前左手位置对应准星中心，快捷键 R">回正 <kbd>R</kbd></button>
+          </div>
         </div>
         <p class="privacy"><span data-icon="shield" aria-hidden="true"></span><span>仅本机处理 · 不上传、不保存</span></p>
       </aside>
