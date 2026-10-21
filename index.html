@@ -11,8 +11,8 @@
     if (location.protocol === 'file:') location.replace('http://127.0.0.1:5173/');
   </script>
   <link rel="icon" href="/aether-play/favicon.svg">
-  <script type="module" crossorigin src="/aether-play/assets/index-DytrJv02.js"></script>
-  <link rel="stylesheet" crossorigin href="/aether-play/assets/index-DUN0n2dG.css">
+  <script type="module" crossorigin src="/aether-play/assets/index-ynJGMmTK.js"></script>
+  <link rel="stylesheet" crossorigin href="/aether-play/assets/index-CotcALpi.css">
 </head>
 <body>
   <main class="game-shell" id="gameShell" aria-label="AETHER · 3D 手势魔法师">
@@ -28,12 +28,14 @@
             <span class="hud-overline" aria-hidden="true">SANCTUARY VITALITY</span>
             <div class="hud-label">圣光水晶 <b id="healthValue">100%</b></div>
             <div class="health-track"><div id="healthBar"></div></div>
+            <div class="shield-readout" id="shieldReadout" hidden></div>
           </div>
         </div>
         <div class="wave-hud">
           <div class="wave-readout">
             <span id="waveLabel">月影遗迹 · 等待唤醒</span>
-            <div class="wave-dots" aria-hidden="true"><i class="current"></i><i></i><i></i></div>
+            <span class="stage-remaining" id="stageRemaining">六关战役 · 守住最后一束光</span>
+            <div class="wave-dots" aria-hidden="true"><i class="current"></i><i></i><i></i><i></i><i></i><i></i></div>
           </div>
           <div class="time-hud" aria-label="剩余时间"><span data-icon="clock" aria-hidden="true"></span><span id="timeValue">01:30</span></div>
         </div>
@@ -48,6 +50,7 @@
       <div class="score-hud" id="scoreHud" hidden>
         <span class="hud-label">守光积分</span><strong id="scoreValue">00000</strong>
         <div id="comboValue">瞄准暗影，释放魔法</div>
+        <div class="active-powerups" id="activePowerups"></div>
       </div>
 
       <div class="spell-bar" role="group" aria-label="魔法技能 · 右手手势或键盘 1、2、3 选择，空格释放大招">
@@ -77,8 +80,8 @@
         <div class="intro-kicker"><span class="brand-sigil" data-icon="nova" aria-hidden="true"></span><span>AETHER<small>月影遗迹 · 手势魔法师</small></span></div>
         <div class="intro-chapter" aria-hidden="true"><i></i>THE LAST LIGHT<i></i></div>
         <h1>让魔法，<br><span>在指尖苏醒。</span></h1>
-        <p>以双手驾驭元素之力，<br>守护月影遗迹的最后一束光。</p>
-        <div class="intro-features"><span>3D 秘境</span><span>双手施法</span><span>90 秒守护</span></div>
+        <p>以双手驾驭元素之力，<br>击中符文触发天灾，守护最后一束光。</p>
+        <div class="intro-features"><span>6 关战役</span><span>双手施法</span><span>3 选 1 升级</span></div>
         <button type="button" id="gestureStart" class="primary-button"><span data-icon="hand"></span><span class="button-copy">开启摄像头施法<small>左手瞄准 · 右手施法</small></span><span data-icon="arrowRight"></span></button>
         <button type="button" id="mouseStart" class="text-button"><span data-icon="play"></span>先用鼠标试试<span data-icon="arrowRight"></span></button>
         <div class="intro-note"><span data-icon="shield" aria-hidden="true"></span>本机识别，坐着就能玩</div>
@@ -95,8 +98,12 @@
       </aside>
 
       <div class="arena-bottom">
+        <div class="build-summary" id="buildSummary" aria-label="已获得的魔法强化"></div>
         <div class="location-label"><span class="tiny-dot" aria-hidden="true"></span><span id="modeLabel">MOONLIT SANCTUARY</span></div>
-        <div class="level-label" id="levelLabel">见习魔法师 <span>LV. 1</span></div>
+        <div class="xp-corner" aria-label="魔法师等级与升级经验">
+          <div class="xp-heading"><div class="level-label" id="levelLabel">见习魔法师 <span>LV. 1</span></div><span class="xp-value" id="xpValue">0 / 100 XP</span></div>
+          <div class="xp-track"><div id="xpBar"></div></div>
+        </div>
       </div>
 
       <aside class="camera-dock" aria-label="本机手势识别预览 · 预览镜像，左右以玩家实际左右手为准">
@@ -122,6 +129,19 @@
           </div>
           <button type="button" id="dialogPrimary" class="primary-button">继续守护</button><button type="button" id="dialogSecondary" class="text-button">返回遗迹</button>
         </div>
+      </div>
+      <div class="upgrade-overlay" id="upgradeOverlay" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle" aria-describedby="upgradeSubtitle upgradeHint" tabindex="-1" hidden>
+        <div class="upgrade-dialog">
+          <header class="upgrade-header">
+            <div class="upgrade-kicker"><i aria-hidden="true"></i><span class="upgrade-sigil" data-icon="nova" aria-hidden="true"></span><span id="upgradeLevel">LEVEL UP · 魔力觉醒</span><i aria-hidden="true"></i></div>
+            <h2 id="upgradeTitle">选择你的魔法</h2>
+            <p id="upgradeSubtitle">三选一，唤醒新的力量。构筑你的元素流派，继续守护之旅。</p>
+          </header>
+          <div class="upgrade-cards" id="upgradeCards" role="group" aria-label="选择一种魔法强化"></div>
+          <p class="upgrade-hint" id="upgradeHint">点击 / 1、2、3 选择 · 手势：左手选卡，右手先握拳，再伸食指保持 0.7 秒</p>
+          <button type="button" class="upgrade-switch" id="upgradeSwitchMode">改用鼠标选卡</button>
+        </div>
+        <div class="upgrade-cursor" id="upgradeCursor" aria-hidden="true" hidden><span data-icon="hand"></span></div>
       </div>
       <div id="toast" class="toast" role="status"></div>
       <span id="footerHint" hidden>左手瞄准 · 右手换势施法 · 握拳停止 · Esc 暂停</span>
