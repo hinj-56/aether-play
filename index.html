@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#081319">
+  <meta name="description" content="双手同时入镜，左手瞄准、右手施法，守护月影遗迹的最后一束光。">
+  <title>3D 手势魔法师 · AETHER</title>
+  <script>
+    // ES modules, the hand-tracking worker and local assets need the game server.
+    if (location.protocol === 'file:') location.replace('http://127.0.0.1:5173/');
+  </script>
+  <link rel="icon" href="/aether-play/favicon.svg">
+  <script type="module" crossorigin src="/aether-play/assets/index-COWDTT_l.js"></script>
+  <link rel="stylesheet" crossorigin href="/aether-play/assets/index-DUN0n2dG.css">
+</head>
+<body>
+  <main class="game-shell" id="gameShell" aria-label="AETHER · 3D 手势魔法师">
+    <section class="arena" id="arena" aria-label="月影遗迹 · 魔法战斗场景">
+      <canvas id="world" aria-label="左手移动瞄准，右手食指星火、食指与中指 V 字霜华、食指中指无名指三指雷霆，五指张掌保持 800ms 星界风暴，握拳停止；也可移动鼠标瞄准、按住左键施法"></canvas>
+      <div class="arena-vignette" aria-hidden="true"></div>
+      <div class="arena-frame" aria-hidden="true"></div>
+
+      <div class="arena-top">
+        <div class="crystal-hud">
+          <span class="crystal-symbol" data-icon="crystal" aria-hidden="true"></span>
+          <div class="crystal-readout">
+            <span class="hud-overline" aria-hidden="true">SANCTUARY VITALITY</span>
+            <div class="hud-label">圣光水晶 <b id="healthValue">100%</b></div>
+            <div class="health-track"><div id="healthBar"></div></div>
+          </div>
+        </div>
+        <div class="wave-hud">
+          <div class="wave-readout">
+            <span id="waveLabel">月影遗迹 · 等待唤醒</span>
+            <div class="wave-dots" aria-hidden="true"><i class="current"></i><i></i><i></i></div>
+          </div>
+          <div class="time-hud" aria-label="剩余时间"><span data-icon="clock" aria-hidden="true"></span><span id="timeValue">01:30</span></div>
+        </div>
+        <div class="arena-tools" role="group" aria-label="游戏设置">
+          <button type="button" class="icon-button" id="soundToggle" title="关闭声音" aria-label="关闭声音" aria-pressed="false"><span data-icon="volume"></span></button>
+          <button type="button" class="icon-button" id="helpToggle" title="玩法说明" aria-label="查看玩法说明"><span data-icon="help"></span></button>
+          <button type="button" class="icon-button" id="pauseGame" title="暂停 · Esc" aria-label="暂停游戏" hidden><span data-icon="pause"></span></button>
+          <button type="button" class="icon-button" id="fullscreen" title="进入全屏" aria-label="进入全屏" aria-pressed="false"><span data-icon="fullscreen"></span></button>
+        </div>
+      </div>
+
+      <div class="score-hud" id="scoreHud" hidden>
+        <span class="hud-label">守光积分</span><strong id="scoreValue">00000</strong>
+        <div id="comboValue">瞄准暗影，释放魔法</div>
+      </div>
+
+      <div class="spell-bar" role="group" aria-label="魔法技能 · 右手手势或键盘 1、2、3 选择，空格释放大招">
+        <span class="rail-heading" aria-hidden="true">元素</span>
+        <button type="button" class="spell-card selected" data-spell="fire" aria-pressed="true" aria-label="星火 · 范围伤害，燃烧 3 秒持续掉血；右手食指施法，快捷键 1" title="星火 · 燃烧 3 秒 · 右手食指 · 1">
+          <kbd aria-hidden="true">1</kbd><span class="spell-rune fire-rune" data-icon="flame" aria-hidden="true"></span><b class="spell-name" aria-hidden="true">星火</b>
+          <span class="spell-caption" aria-hidden="true"><b>焚身星火</b><small>范围伤害 + 燃烧 3 秒<br>每半秒掉血 · 再命中刷新</small></span><span class="selected-dot" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="spell-card" data-spell="frost" aria-pressed="false" aria-label="霜华 · 减速 65%，持续 2.4 秒；右手食指加中指 V 字施法，快捷键 2" title="霜华 · 减速 65%，持续 2.4 秒 · 右手 V 字 · 2">
+          <kbd aria-hidden="true">2</kbd><span class="spell-rune frost-rune" data-icon="snowflake" aria-hidden="true"></span><b class="spell-name" aria-hidden="true">霜华</b>
+          <span class="spell-caption" aria-hidden="true"><b>凛冬霜华</b><small>减速 65% · 持续 2.4 秒<br>再命中刷新 · 可与燃烧共存</small></span><span class="selected-dot" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="spell-card" data-spell="storm" aria-pressed="false" aria-label="雷霆 · 连锁雷电；右手食指、中指、无名指三指施法，快捷键 3" title="雷霆 · 右手食指、中指、无名指 · 3">
+          <kbd aria-hidden="true">3</kbd><span class="spell-rune storm-rune" data-icon="bolt" aria-hidden="true"></span><b class="spell-name" aria-hidden="true">雷霆</b>
+          <span class="spell-caption" aria-hidden="true"><b>连锁雷电</b><small>食指、中指、无名指 · 连锁</small></span><span class="selected-dot" aria-hidden="true"></span>
+        </button>
+        <div class="ultimate-box">
+          <button type="button" id="ultimateButton" aria-label="星界风暴大招 · 能量满后右手五指张掌保持 800ms（0.8 秒），或按空格释放" aria-describedby="energyValue ultimateText" title="星界风暴 · 五指张开 0.8 秒 · Space" disabled>
+            <kbd aria-hidden="true">␣</kbd><span class="spell-rune" data-icon="nova" aria-hidden="true"></span><b class="spell-name" aria-hidden="true">星爆</b><span id="ultimateText" class="sr-only">击败暗影，积攒能量</span>
+          </button>
+          <div class="energy-track" aria-hidden="true"><div id="energyBar"></div></div>
+          <span id="energyValue" aria-label="大招能量">0 / 100</span>
+        </div>
+      </div>
+
+      <div class="intro-card" id="intro">
+        <div class="intro-kicker"><span class="brand-sigil" data-icon="nova" aria-hidden="true"></span><span>AETHER<small>月影遗迹 · 手势魔法师</small></span></div>
+        <div class="intro-chapter" aria-hidden="true"><i></i>THE LAST LIGHT<i></i></div>
+        <h1>让魔法，<br><span>在指尖苏醒。</span></h1>
+        <p>以双手驾驭元素之力，<br>守护月影遗迹的最后一束光。</p>
+        <div class="intro-features"><span>3D 秘境</span><span>双手施法</span><span>90 秒守护</span></div>
+        <button type="button" id="gestureStart" class="primary-button"><span data-icon="hand"></span><span class="button-copy">开启摄像头施法<small>左手瞄准 · 右手施法</small></span><span data-icon="arrowRight"></span></button>
+        <button type="button" id="mouseStart" class="text-button"><span data-icon="play"></span>先用鼠标试试<span data-icon="arrowRight"></span></button>
+        <div class="intro-note"><span data-icon="shield" aria-hidden="true"></span>本机识别，坐着就能玩</div>
+      </div>
+
+      <div class="target-hint" id="targetHint" hidden>左手移动瞄准 · 右手食指火球，V 字冰霜，三指雷电 · 握拳停止</div>
+      <div class="wave-banner" id="waveBanner" aria-live="polite"></div>
+
+      <aside class="gesture-legend" aria-label="双手施法说明，左右以玩家实际左右手为准">
+        <div class="gesture-legend-heading"><span class="tiny-dot" aria-hidden="true"></span>双手施法 <span>GESTURE GUIDE</span></div>
+        <div class="gesture-hands"><p><b>左手</b><span>静置校准 · 移动瞄准</span></p><p><b>右手</b><span>切换手势 · 持续施法</span></p></div>
+        <div class="gesture-spells"><span class="gesture-fire">食指 <b>星火</b></span><span class="gesture-frost">V 字 <b>霜华</b></span><span class="gesture-storm">三指 <b>雷霆</b></span><span class="gesture-nova">张掌 <b>星爆</b></span></div>
+        <p class="gesture-detail">V 字为食指 + 中指，三指再加无名指<br>张掌保持 0.8 秒释放大招 · 握拳停止</p>
+      </aside>
+
+      <div class="arena-bottom">
+        <div class="location-label"><span class="tiny-dot" aria-hidden="true"></span><span id="modeLabel">MOONLIT SANCTUARY</span></div>
+        <div class="level-label" id="levelLabel">见习魔法师 <span>LV. 1</span></div>
+      </div>
+
+      <aside class="camera-dock" aria-label="本机手势识别预览 · 预览镜像，左右以玩家实际左右手为准">
+        <div class="camera-box" id="cameraBox">
+          <div class="camera-heading"><span data-icon="hand" aria-hidden="true"></span>手势感应<span aria-hidden="true">LOCAL</span></div>
+          <div class="camera-screen">
+            <video id="cameraVideo" aria-label="摄像头镜像实时预览" playsinline muted hidden></video>
+            <canvas id="cameraCanvas" aria-label="手势识别轮廓" hidden></canvas>
+            <div class="camera-placeholder" id="cameraPlaceholder"><span data-icon="hand" aria-hidden="true"></span><p>双手同时入镜</p></div>
+            <span class="camera-live" id="cameraLive" hidden><i></i>本机识别</span>
+          </div>
+          <div class="camera-status"><span id="trackingDot" class="status-dot" aria-hidden="true"></span><span id="cameraStatus" role="status">摄像头尚未开启</span><button type="button" id="switchMode" title="切换操控方式" aria-label="切换摄像头或鼠标操控">切换</button></div>
+        </div>
+        <p class="privacy"><span data-icon="shield" aria-hidden="true"></span><span>仅本机处理 · 不上传、不保存</span></p>
+      </aside>
+
+      <div class="overlay" id="overlay" hidden>
+        <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" aria-describedby="dialogText">
+          <div class="dialog-sigil" id="dialogSigil" aria-hidden="true">✧</div><div class="eyebrow" id="dialogKicker">A MOMENT OF MAGIC</div>
+          <h2 id="dialogTitle">准备施法</h2><p id="dialogText"></p>
+          <div class="result-stats" id="resultStats" hidden>
+            <div><strong id="resultScore">0</strong><span>守光积分</span></div><div><strong id="resultKills">0</strong><span>净化暗影</span></div><div><strong id="resultCombo">0</strong><span>最高连击</span></div>
+          </div>
+          <button type="button" id="dialogPrimary" class="primary-button">继续守护</button><button type="button" id="dialogSecondary" class="text-button">返回遗迹</button>
+        </div>
+      </div>
+      <div id="toast" class="toast" role="status"></div>
+      <span id="footerHint" hidden>左手瞄准 · 右手换势施法 · 握拳停止 · Esc 暂停</span>
+      <div id="announcer" class="sr-only" aria-live="polite"></div>
+    </section>
+  </main>
+</body>
+</html>
+
